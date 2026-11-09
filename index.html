@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Football Black Mini (Classic Retro Edition)</title>
+    <title>City Block - Stack Builder</title>
     <style>
         body {
             margin: 0;
             padding: 0;
-            background-color: #000;
+            background-color: #1a1a2e;
             color: #fff;
-            font-family: monospace;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -21,56 +21,62 @@
         }
         #game-wrapper {
             text-align: center;
-            border: 2px solid #555;
-            background: #111;
-            padding: 10px;
-            box-shadow: 0 0 15px rgba(255,255,255,0.1);
+            border: 4px solid #e94560;
+            background: #0f3460;
+            padding: 15px;
+            border-radius: 12px;
+            box-shadow: 0 0 25px rgba(233, 69, 96, 0.4);
         }
         canvas {
             display: block;
-            background: #000;
-            border: 1px solid #fff;
+            background: #162447;
+            border: 2px solid #e94560;
+            border-radius: 6px;
             margin: 0 auto;
         }
         .header-info {
             display: flex;
             justify-content: space-between;
             width: 320px;
-            margin: 5px auto;
-            font-size: 16px;
+            margin: 10px auto;
+            font-size: 18px;
             font-weight: bold;
+            color: #e4e4e4;
         }
         .controls {
-            margin-top: 10px;
+            margin-top: 15px;
             display: flex;
             justify-content: center;
-            gap: 15px;
+            gap: 20px;
         }
         button {
-            background: #222;
+            background: #e94560;
             color: #fff;
-            border: 1px solid #fff;
-            padding: 10px 20px;
-            font-size: 14px;
+            border: none;
+            padding: 12px 28px;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 6px;
             cursor: pointer;
+            box-shadow: 0 4px #903749;
         }
         button:active {
-            background: #444;
+            transform: translateY(4px);
+            box-shadow: 0 0 #903749;
         }
     </style>
 </head>
 <body>
 
     <div id="game-wrapper">
-        <div style="font-size: 14px; margin-bottom: 5px; color: #aaa;">FOOTBALL BLACK MINI</div>
+        <div style="font-size: 18px; margin-bottom: 5px; color: #e94560; font-weight: bold;">🏙️ CITY BLOCK STACKER</div>
         <div class="header-info">
             <span id="score">SKOR: 0</span>
-            <span id="lives">NYAWA: 3</span>
+            <span id="best">TERTINGGI: 0</span>
         </div>
-        <canvas id="gameCanvas" width="320" height="480"></canvas>
+        <canvas id="gameCanvas" width="320" height="440"></canvas>
         <div class="controls">
-            <button id="left-btn">&lt;&lt; KIRI</button>
-            <button id="right-btn">KANAN &gt;&gt;</button>
+            <button id="drop-btn">JATUHKAN BLOK 🏗️</button>
         </div>
     </div>
 
@@ -79,97 +85,104 @@
         const ctx = canvas.getContext('2d');
 
         let score = 0;
-        let lives = 3;
+        let bestScore = 0;
+        let stack = [];
+        let currentBlock = { x: 50, y: 50, width: 120, height: 25, vx: 3, color: '#e94560' };
+        let cameraY = 0;
+        let gameRunning = true;
 
-        let ball = { x: 160, y: 100, radius: 8, vx: 2, vy: 3 };
-        let paddle = { x: 130, y: 440, width: 60, height: 12 };
+        const colors = ['#e94560', '#f9ed69', '#f08a5d', '#b83b5e', '#6c5ce7', '#00b894'];
 
-        const kickSound = new Audio('kick.ogg');
-        const crowdSound = new Audio('ohhcrowd.ogg');
-        const tapSound = new Audio('balltap.ogg');
+        function initGame() {
+            stack = [{ x: 100, y: 380, width: 120, height: 25, color: '#00b894' }];
+            score = 0;
+            document.getElementById('score').innerText = 'SKOR: ' + score;
+            spawnBlock();
+        }
 
-        let leftPressed = false;
-        let rightPressed = false;
+        function spawnBlock() {
+            let lastBlock = stack[stack.length - 1];
+            let newWidth = lastBlock.width;
+            currentBlock = {
+                x: 0,
+                y: lastBlock.y - 30,
+                width: newWidth,
+                height: 25,
+                vx: 3 + Math.floor(score / 5),
+                color: colors[stack.length % colors.length]
+            };
+        }
 
-        function resetBall() {
-            ball.x = 160;
-            ball.y = 100;
-            ball.vx = (Math.random() > 0.5 ? 1 : -1) * (2 + Math.random() * 2);
-            ball.vy = 3 + Math.random() * 2;
+        function dropBlock() {
+            if (!gameRunning) {
+                gameRunning = true;
+                initGame();
+                return;
+            }
+
+            let lastBlock = stack[stack.length - 1];
+            let diff = currentBlock.x - lastBlock.x;
+
+            if (Math.abs(diff) >= currentBlock.width) {
+                gameRunning = false;
+                alert('GAME OVER! Blok meleset. Skor Anda: ' + score);
+                if (score > bestScore) {
+                    bestScore = score;
+                    document.getElementById('best').innerText = 'TERTINGGI: ' + bestScore;
+                }
+                return;
+            }
+
+            // Trim block
+            if (diff > 0) {
+                currentBlock.width -= diff;
+            } else {
+                currentBlock.width += diff;
+                currentBlock.x = lastBlock.x + diff;
+            }
+
+            stack.push({ ...currentBlock });
+            score++;
+            document.getElementById('score').innerText = 'SKOR: ' + score;
+
+            if (stack.length > 10) {
+                stack.shift();
+                stack.forEach(b => b.y += 30);
+            }
+
+            spawnBlock();
         }
 
         function update() {
-            ball.x += ball.vx;
-            ball.y += ball.vy;
+            if (!gameRunning) return;
 
-            if (ball.x - ball.radius < 0 || ball.x + ball.radius > canvas.width) {
-                ball.vx *= -1;
-            }
-            if (ball.y - ball.radius < 0) {
-                ball.vy *= -1;
-            }
-
-            if (leftPressed && paddle.x > 0) {
-                paddle.x -= 6;
-            }
-            if (rightPressed && paddle.x + paddle.width < canvas.width) {
-                paddle.x += 6;
-            }
-
-            if (
-                ball.y + ball.radius >= paddle.y &&
-                ball.y - ball.radius <= paddle.y + paddle.height &&
-                ball.x >= paddle.x &&
-                ball.x <= paddle.x + paddle.width
-            ) {
-                try { tapSound.play(); } catch(e){}
-                ball.vy *= -1.05;
-                score += 1;
-                document.getElementById('score').innerText = 'SKOR: ' + score;
-            }
-
-            if (ball.y > canvas.height) {
-                try { crowdSound.play(); } catch(e){}
-                lives--;
-                document.getElementById('lives').innerText = 'NYAWA: ' + lives;
-                if (lives <= 0) {
-                    alert('GAME OVER! Skor Anda: ' + score);
-                    score = 0;
-                    lives = 3;
-                    document.getElementById('score').innerText = 'SKOR: ' + score;
-                    document.getElementById('lives').innerText = 'NYAWA: ' + lives;
-                }
-                resetBall();
+            currentBlock.x += currentBlock.vx;
+            if (currentBlock.x <= 0 || currentBlock.x + currentBlock.width >= canvas.width) {
+                currentBlock.vx *= -1;
             }
         }
 
         function draw() {
-            ctx.fillStyle = '#000';
+            ctx.fillStyle = '#162447';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-            ctx.strokeStyle = '#fff';
-            ctx.lineWidth = 2;
-            ctx.strokeRect(10, 10, canvas.width - 20, canvas.height - 20);
+            // Draw stack
+            stack.forEach(b => {
+                ctx.fillStyle = b.color;
+                ctx.fillRect(b.x, b.y, b.width, b.height);
+                ctx.strokeStyle = '#fff';
+                ctx.lineWidth = 1;
+                ctx.strokeRect(b.x, b.y, b.width, b.height);
+            });
 
-            ctx.beginPath();
-            ctx.moveTo(10, canvas.height / 2);
-            ctx.lineTo(canvas.width - 10, canvas.height / 2);
-            ctx.setLineDash([4, 4]);
-            ctx.strokeStyle = '#444';
-            ctx.stroke();
-            ctx.setLineDash([]);
-
-            ctx.beginPath();
-            ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
-            ctx.fillStyle = '#fff';
-            ctx.fill();
-            ctx.lineWidth = 1;
-            ctx.strokeStyle = '#000';
-            ctx.stroke();
-            ctx.closePath();
-
-            ctx.fillStyle = '#fff';
-            ctx.fillRect(paddle.x, paddle.y, paddle.width, paddle.height);
+            // Draw moving block
+            if (gameRunning) {
+                ctx.fillStyle = currentBlock.color;
+                ctx.fillRect(currentBlock.x, currentBlock.y, currentBlock.width, currentBlock.height);
+                ctx.strokeStyle = '#fff';
+                ctx.lineWidth = 1;
+                ctx.strokeRect(currentBlock.x, currentBlock.y, currentBlock.width, currentBlock.height);
+            }
         }
 
         function loop() {
@@ -178,19 +191,14 @@
             requestAnimationFrame(loop);
         }
 
-        const leftBtn = document.getElementById('left-btn');
-        const rightBtn = document.getElementById('right-btn');
+        document.getElementById('drop-btn').addEventListener('click', dropBlock);
+        window.addEventListener('keydown', (e) => {
+            if (e.key === ' ' || e.key === 'ArrowDown') {
+                dropBlock();
+            }
+        });
 
-        leftBtn.addEventListener('mousedown', () => leftPressed = true);
-        leftBtn.addEventListener('mouseup', () => leftPressed = false);
-        leftBtn.addEventListener('touchstart', (e) => { e.preventDefault(); leftPressed = true; });
-        leftBtn.addEventListener('touchend', (e) => { e.preventDefault(); leftPressed = false; });
-
-        rightBtn.addEventListener('mousedown', () => rightPressed = true);
-        rightBtn.addEventListener('mouseup', () => rightPressed = false);
-        rightBtn.addEventListener('touchstart', (e) => { e.preventDefault(); rightPressed = true; });
-        rightBtn.addEventListener('touchend', (e) => { e.preventDefault(); rightPressed = false; });
-
+        initGame();
         requestAnimationFrame(loop);
     </script>
 </body>
