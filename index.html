@@ -58,8 +58,10 @@
         let score = 0;
         let lives = 3;
 
-        let ball = { x: 200, y: 50, radius: 12, speedX: 3, speedY: 4 };
-        let keeper = { x: 160, y: 450, width: 80, height: 20, speed: 25 };
+        let ball = { x: 180, y: 520, radius: 14, vx: 0, vy: 0 };
+        let goal = { x: 110, y: 80, width: 140, height: 60 };
+        let goalkeeper = { x: 160, y: 100, width: 40, height: 20, vx: 2 };
+        let arrowAngle = 0;
 
         function update() {
             ball.x += ball.speedX;
